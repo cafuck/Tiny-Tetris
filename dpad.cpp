@@ -13,24 +13,20 @@
 #define DPADCPP
 
 #include <Arduino.h>
-
-#ifndef KEYPAD_PIN
-#define KEYPAD_PIN  A0
-#endif
+#include "TinyTetris.h"
 
 // this is for analog 5x momentary buttons dpad
 // as seen here http://fritzing.org/projects/arduino-5-buttons-keypad
 // put your resistor calibration values here
 const int dpad[5][2] = {
-  {460, 480}, //KEY_MIDDLE 0
-  {122, 234}, //KEY_LEFT 1
-  {700, 750}, //KEY_RIGHT 2
-  {-1,   70}, //KEY_DOWN 3
-  {260, 350}  //KEY_ROTATE 4
+	{460, 480}, 		//KEY_MIDDLE 1
+	{0x120, 0x140}, 	//KEY_LEFT 2
+	{0x210, 0x220}, 	//KEY_RIGHT 3
+	{0x280, 0x290}, 	//KEY_DOWN 4
+	{0x2D0, 0x2F0}  	//KEY_ROTATE 5
 };
 
 static int dpadwarp[5] = { 0,0,0,0,0 };
-static volatile int Debounce = 0;
 static volatile bool processKey = true;
 static volatile int currentPos;
 
@@ -38,8 +34,6 @@ static volatile int currentPos;
 class Dpad
 {
 
-  static const int DebounceMax = 10;
-  
   public:
 
     static int getPos() {
@@ -55,30 +49,6 @@ class Dpad
       return -1;
     }
 
-    static boolean DoDebounce() {
-      Debounce++;
-      if(Debounce > DebounceMax) {
-        return true;
-      }
-      return false;
-    }
-
-    static int setAccel(int acceleration, int offset) {
-      if(processKey) {
-        dpadwarp[currentPos] = millis();
-      }
-      if(millis() < dpadwarp[currentPos] + offset) {
-        processKey = false;
-      } else {
-        processKey = true;
-        acceleration = acceleration + 70;
-        if (acceleration > offset) {
-          acceleration = offset;
-        }
-      }
-      return acceleration;
-    }
-
   private:
   
     static int getPosition(int pin) {
@@ -88,6 +58,3 @@ class Dpad
 
 #endif
 
-
-
- 

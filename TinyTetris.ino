@@ -22,23 +22,10 @@ Create defines for all the magic numbers but they are useful for now.
 */
 
 #include <Wire.h>
+#include "TinyTetris.h"
+
 #include "TetrisTheme.cpp"
 #include "dpad.cpp"
-
-#define OLED_ADDRESS	        	0x3C //you may need to change this, this is the OLED I2C address.  
-#define OLED_COMMAND	                0x80
-#define OLED_DATA	                0x40
-#define OLED_DISPLAY_OFF	        0xAE
-#define OLED_DISPLAY_ON	                0xAF
-#define OLED_NORMAL_DISPLAY	    	0xA6
-#define OLED_INVERSE_DISPLAY     	0xA7
-#define OLED_SET_BRIGHTNESS	        0x81
-#define OLED_SET_ADDRESSING	        0x20
-#define OLED_HORIZONTAL_ADDRESSING	0x00
-#define OLED_VERTICAL_ADDRESSING	0x01
-#define OLED_PAGE_ADDRESSING	        0x02
-#define OLED_SET_COLUMN                 0x21
-#define OLED_SET_PAGE	                0x22
 
 // the tetris blocks
 const byte Blocks[7][2] PROGMEM = {
@@ -175,18 +162,7 @@ const byte brickLogo[36][8] PROGMEM= {
 };
 
 
-#define KEY_MIDDLE  0
-#define KEY_LEFT    1
-#define KEY_RIGHT   2
-#define KEY_DOWN    3
-#define KEY_ROTATE  4
-
-#define PIEZO_PIN   3
-#define LED_PIN     13
-#define KEYPAD_PIN  A0
-
 //struct for pieces
-
 struct PieceSpace {
   byte umBlock[4][4];
   char Row;
@@ -194,7 +170,6 @@ struct PieceSpace {
 };
 
 //Globals, is a mess. To do: tidy up and reduce glogal use if possible
-
 byte pageArray[8] = { 0 };
 byte scoreDisplayBuffer[8][6] = { { 0 }, { 0 } };
 byte nextBlockBuffer[8][2] = { { 0 }, { 0 } };
@@ -917,10 +892,7 @@ void tetrisScreenToSerial() {
 
 bool processKeys() {
 
-  bool keypressed = true;
-  int leftRight = 300 - acceleration;
-  int rotate = 700;
-  int down = 110 - acceleration;
+  bool keypressed = false;
 
   int dpadpos = Dpad::getPos();
 
@@ -928,33 +900,19 @@ bool processKeys() {
 
   switch(dpadpos) {
     case KEY_LEFT:
-      if( Dpad::DoDebounce() ) {
-        acceleration = Dpad::setAccel(acceleration, leftRight);
-      }
       movePieceLeft();
     break;
     case KEY_RIGHT:
-      if( Dpad::DoDebounce() ) {
-        acceleration = Dpad::setAccel(acceleration, leftRight);
-      }
       movePieceRight();
     break;
     case KEY_DOWN:
-      if( Dpad::DoDebounce() ) {
-        acceleration = Dpad::setAccel(acceleration, down);
-      }
       movePieceDown();
     break;
     case KEY_ROTATE:
-      if( Dpad::DoDebounce() ) {
-        acceleration = Dpad::setAccel(acceleration, rotate);
-      }
       RotatePiece();
     break;
     default:
-      acceleration = 0; 
       processKey = true; 
-      Debounce = 0;
       keypressed = false;
     break;
   }
