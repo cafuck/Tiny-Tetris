@@ -25,7 +25,6 @@
 #include "TinyTetris.h"
 
 #include "TetrisTheme.cpp"
-#include "dpad.cpp"
 
 // the tetris blocks
 const byte Blocks[7][2] PROGMEM = {
@@ -195,7 +194,8 @@ int lastKey = 0;
 
 // I2C
 
-void OLEDCommand(byte command) {
+void OLEDCommand(byte command)
+{
 	Wire.beginTransmission(OLED_ADDRESS);
 	Wire.write(OLED_COMMAND);
 	Wire.write(command);
@@ -203,7 +203,8 @@ void OLEDCommand(byte command) {
 }
 
 
-void OLEDData(byte data) {
+void OLEDData(byte data)
+{
 	Wire.beginTransmission(OLED_ADDRESS);
 	Wire.write(OLED_DATA);
 	Wire.write(data);
@@ -211,7 +212,8 @@ void OLEDData(byte data) {
 }
 
 
-void setup() {
+void setup()
+{
 	Serial.begin(9600);
 	while (!Serial);
 
@@ -248,7 +250,8 @@ void setup() {
 }
 
 
-void fillTetrisArray(byte value) {
+void fillTetrisArray(byte value)
+{
 	for (char r = 0; r < 24; r++) {
 		for (char c = 0; c < 14; c++) {
 			tetrisScreen[c][r] = value;
@@ -262,7 +265,8 @@ void fillTetrisArray(byte value) {
 }
 
 
-void fillTetrisScreen(byte value) {
+void fillTetrisScreen(byte value)
+{
 	for (int r = 1; r < 21; r++) {
 		for (int c = 2; c < 12; c++) {
 			tetrisScreen[c][r] = value;
@@ -271,7 +275,8 @@ void fillTetrisScreen(byte value) {
 }
 
 
-void drawTetrisScreen() {
+void drawTetrisScreen()
+{
 	for (byte r = 1; r < 21; r++) {
 		//loop through rows to see if there is data to be sent
 		for (byte c = 2; c < 12; c++) {
@@ -290,7 +295,8 @@ void drawTetrisScreen() {
 }
 
 
-void drawTetrisTitle(bool blank = false) {
+void drawTetrisTitle(bool blank = false)
+{
 	byte byteval;
 
 	//set Vertical addressing mode and column - page start end
@@ -358,7 +364,8 @@ void drawTetrisTitle(bool blank = false) {
 }
 
 
-void drawTetrisLine(byte x) {
+void drawTetrisLine(byte x)
+{
 	//fill array with blocks based on blockRow
 
 	//clear page and Optimize array
@@ -519,7 +526,8 @@ void drawTetrisLine(byte x) {
 }
 
 
-void loadPiece(byte pieceNumber, byte row, byte coloum, bool loadScreen) {
+void loadPiece(byte pieceNumber, byte row, byte coloum, bool loadScreen)
+{
 	//load the piece from piece array to screen
 	byte pieceRow = 0;
 	byte pieceColoum = 0;
@@ -568,7 +576,8 @@ void loadPiece(byte pieceNumber, byte row, byte coloum, bool loadScreen) {
 }
 
 
-void drawPiece() {
+void drawPiece()
+{
 
 	char coloum;
 	char row;
@@ -609,7 +618,8 @@ void drawPiece() {
 }
 
 
-void drawLandedPiece() {
+void drawLandedPiece()
+{
 
 	char coloum;
 	char row;
@@ -637,7 +647,8 @@ void drawLandedPiece() {
 bool led = true;
 
 
-void RotatePiece() {
+void RotatePiece()
+{
 	byte i, j;
 
 	byte umFig[4][4] = { 0 };
@@ -671,7 +682,8 @@ void RotatePiece() {
 }
 
 
-bool movePieceDown() {
+bool movePieceDown()
+{
 	bool pieceLanded = false;
 	char rndPiece = 0;
 
@@ -703,7 +715,8 @@ bool movePieceDown() {
 }
 
 
-void movePieceLeft() {
+void movePieceLeft()
+{
 	oldPiece = currentPiece;
 	currentPiece.Coloum = currentPiece.Coloum - 1;
 	//check collision
@@ -713,7 +726,8 @@ void movePieceLeft() {
 }
 
 
-void movePieceRight() {
+void movePieceRight()
+{
 	oldPiece = currentPiece;
 	currentPiece.Coloum = currentPiece.Coloum + 1;
 	//check collision
@@ -723,7 +737,8 @@ void movePieceRight() {
 }
 
 
-bool checkColloision() {
+bool checkColloision()
+{
 
 	byte pieceRow = 0;
 	byte pieceColoum = 0;
@@ -746,7 +761,8 @@ bool checkColloision() {
 }
 
 
-void processCompletedLines() {
+void processCompletedLines()
+{
 
 	char rowCheck = 0;
 	char coloumCheck = 0;
@@ -878,7 +894,8 @@ void processCompletedLines() {
 }
 
 
-void tetrisScreenToSerial() {
+void tetrisScreenToSerial()
+{
 	//for debug
 	for (int r = 0; r < 24; r++) {
 		for (int c = 0; c < 14; c++) {
@@ -889,16 +906,58 @@ void tetrisScreenToSerial() {
 	Serial.println();
 }
 
+///////////////////////////////////////
+/*
+ * Get a KEY_CODE from a ADC channel
+ * WITH DeBouncing function
+ */
+static inline key getKey(int ADC_Pin)
+{
+	static volatile int a1 = 0;
+	static volatile int a2 = 0;
+	static volatile int a3 = 0;
 
-bool processKeys() {
+	int i = 0;
 
-	bool keypressed = false;
+	//Do 3 times sampling
+	//1st time
+	a1 = analogRead(ADC_Pin);
+	delay(10);
 
-	int dpadpos = Dpad::getPos();
+	//2nd time
+	a2 = analogRead(ADC_Pin);
+	delay(10);
 
-	//Serial.println(dpadpos);
+	//3rd time
+	a3 = analogRead(ADC_Pin);
 
-	switch(dpadpos) {
+	//Ignore bounces (DeBouncing)
+	if(abs(a1-a2) > 10 || abs(a1-a3) > 10 || abs(a2-a3) > 10){
+
+		return KEY_NOKEY;
+	}
+
+	//put average value on a1
+	a1 = (a1 + a2 + a3) / 3;
+
+	//Trying to matching a KEY
+	for(i = 0; i < ARRAY_SIZE(ADC_key_table); i++) {
+		if(a1 > ADC_key_table[i][0] && a1 < ADC_key_table[i][1]) {
+			//Matched a Key
+			return key(i);
+		}
+	}
+
+	//Didn't mach any Key
+	return KEY_NOKEY;
+}
+
+bool processKeys()
+{
+	key KKK = getKey(ADC_CHANNEL);
+	delay(100);
+
+	switch(KKK) {
 		case KEY_LEFT:
 			movePieceLeft();
 			break;
@@ -911,13 +970,12 @@ bool processKeys() {
 		case KEY_ROTATE:
 			RotatePiece();
 			break;
+		case KEY_NOKEY:
 		default:
-			processKey = true; 
-			keypressed = false;
 			break;
 	}
 
-	if (keypressed) {
+	if (KKK != KEY_NOKEY) {
 		drawPiece();
 		drawTetrisScreen();
 	}
@@ -925,7 +983,6 @@ bool processKeys() {
 
 
 void setScore(long score, bool blank)
-
 {
 	// this is a kludge. To do: create a proper system for rendering numbers and letters.
 
@@ -1061,7 +1118,8 @@ void setScore(long score, bool blank)
 }
 
 
-void setNextBlock(byte pieceNumber) {
+void setNextBlock(byte pieceNumber)
+{
 	memset(nextBlockBuffer, 0, sizeof nextBlockBuffer); //clear buffer
 	switch (pieceNumber) {
 		case 1:
@@ -1157,7 +1215,8 @@ void setNextBlock(byte pieceNumber) {
 }
 
 
-void drawBottom() {
+void drawBottom()
+{
 
 	//set Vertical addressing mode and column - page start end
 	OLEDCommand(OLED_SET_ADDRESSING);
@@ -1177,7 +1236,8 @@ void drawBottom() {
 }
 
 
-void drawSides() {
+void drawSides()
+{
 
 	//set Vertical addressing mode and column - page start end
 	OLEDCommand(OLED_SET_ADDRESSING);
@@ -1201,7 +1261,8 @@ void drawSides() {
 }
 
 
-void loop() {
+void loop()
+{
 	//main loop code
 	//To do: create high score system that savees to EEprom
 	gameOver = false;
